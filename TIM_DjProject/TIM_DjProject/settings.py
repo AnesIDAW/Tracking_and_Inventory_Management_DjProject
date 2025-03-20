@@ -31,12 +31,21 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # Third-party apps
+    'jazzmin',  # Django Jazzmin for admin UI
+    
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Our apps
+    'users',
+    'inventory',
+    'tracking',
+    'dashboard',
 ]
 
 MIDDLEWARE = [
@@ -121,3 +130,13 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'users.CustomUser'
+
+JAZZMIN_SETTINGS = {
+    "site_title": "TIM Dashboard",
+    "site_header": "TIM Admin Panel",
+    "welcome_sign": "Welcome to TIM Tracking System",
+    "show_sidebar": True,
+    "navigation_expanded": True,
+}
