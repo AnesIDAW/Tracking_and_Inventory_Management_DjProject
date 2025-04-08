@@ -18,3 +18,16 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.status}"
+
+
+class Vehicle(models.Model):
+    name = models.CharField(max_length=100)
+    status = models.CharField(max_length=50, choices=[('In-Transit', 'In-Transit'),
+                                                       ('Delivered', 'Delivered')])
+    lat = models.FloatField(null=True)
+    long = models.FloatField(null=True)
+    current_location = models.CharField(max_length=255, blank=True, null=True)  # GPS Coordinates
+    last_updated = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return self.name
+

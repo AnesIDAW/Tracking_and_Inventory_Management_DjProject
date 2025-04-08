@@ -4,6 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from .models import CustomUser
 from .forms import CustomUserCreationForm
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse
 
 # User Registration View (Clients)
 def register(request):
@@ -25,7 +26,9 @@ def user_login(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('/admin/' if user.role == 'admin' else 'client_dashboard')  # Redirect to Dashboard after login
+            return redirect('/admin/' if user.role == 'admin' 
+                            else 
+                            reverse("dashboard:client_dashboard"))  # Redirect to Dashboard after login
     else:
         form = AuthenticationForm()
     return render(request, 'users/login.html', {'form': form})

@@ -33,7 +33,8 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # Third-party apps
     'jazzmin',  # Django Jazzmin for admin UI
-    
+    #"corsheaders",
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    #"corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -140,3 +142,11 @@ JAZZMIN_SETTINGS = {
     "show_sidebar": True,
     "navigation_expanded": True,
 }
+
+ALLOWED_HOSTS = ['127.0.0.1', '192.168.43.209', '0.0.0.0','192.168.1.7']
+
+"""CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",  # Allow frontend to access API
+    "http://192.168.1.7:8000",  # Allow ESP32 if needed
+]
+"""
