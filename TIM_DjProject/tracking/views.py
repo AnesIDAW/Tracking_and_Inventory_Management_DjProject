@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .models import Vehicle
+from inventory.models import Vehicle
 
 @csrf_exempt
 def update_location(request):
