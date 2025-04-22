@@ -4,8 +4,7 @@ from twilio.rest import Client
 def send_delivery_notification(product):
     user = product.client
     subject = f"Your product '{product.name}' was delivered"
-    message = f"""Hello {user.first_name},\n\nYour product '{product.name}' 
-                  was delivered on {product.delivery_date}."""
+    message = f"Hello {user.first_name},\n\nYour product '{product.name}' was delivered on {product.delivery_date}."
     recipient_list = [user.email]
 
     send_mail(
@@ -21,6 +20,5 @@ def send_sms_notification(user, product):
     message = client.messages.create(
         to=user.phone_number,
         from_="Your_Twilio_Number",
-        body=f"""Hi {user.first_name}, your product '{product.name}' 
-        has been delivered!"""
+        body=f"Hi {user.first_name}, your product '{product.name}' has been delivered!"
     )

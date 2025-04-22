@@ -11,7 +11,11 @@
 <body>
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
+    {% if request.user.is_staff or request.user.is_superuser %}
+    <a href="{% url 'dashboard:admin_dashboard' %}" class="brand-link">
+    {% else %}
     <a href="{% url 'dashboard:client_dashboard' %}" class="brand-link">
+    {% endif %}
         <img src="{% static jazzmin_settings.site_logo %}" 
              alt="{{ jazzmin_settings.site_title }}" 
              class="brand-image img-circle elevation-3" 

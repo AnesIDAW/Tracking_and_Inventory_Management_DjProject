@@ -6,7 +6,7 @@ from users.views import user_logout
 app_name = "dashboard"
 
 urlpatterns = [
-    path('admin/', admin_dashboard, name='admin_dashboard'),
+    path('staff/', admin_dashboard, name='admin_dashboard'),
     path('client/', client_dashboard, name='client_dashboard'),
     path("api/vehicle-locations/", vehicle_locations, name="vehicle_locations"),
     path('update-location/', update_location, name="update_location"),

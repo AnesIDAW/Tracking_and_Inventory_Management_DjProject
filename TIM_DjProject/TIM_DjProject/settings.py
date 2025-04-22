@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'users',
     'inventory',
     'tracking',
-    'dashboard',
+    'dashboard.apps.DashboardConfig',
 ]
 
 MIDDLEWARE = [
@@ -203,7 +203,7 @@ JAZZMIN_SETTINGS = {
     # "custom_css": "css/bootstrap-dark.css",
     "custom_js": None,
     # Whether to show the UI customizer on the sidebar
-    "show_ui_builder": True,
+    "show_ui_builder": False,
     ###############
     # Change view #
     ###############

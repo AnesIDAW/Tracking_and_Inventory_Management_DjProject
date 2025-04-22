@@ -1,47 +1,58 @@
-{% extends "admin/base.html" %}
+{% extends "base.html" %}
+
+{% block title %}Staff Dashboard{% endblock %}
+
+{% block sidebar %}
+    {% include "includes/sidebar.html" %}
+{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2 class="mt-4">Stuff Dashboard</h2>
+<div class="container fluid px-4" style="padding-top: 0px;">
+    <!-- Staff Dashboard Header -->
+    <div class="text-center">
+        <h2 class="font-weight-bold">Welcome, {{ request.user.first_name|default:request.user.username }}</h2>
+        <p class="text-muted">Here’s you can visionate all the deliveries for all Clients.</p>
+    </div>
+    <!-- Summary Cards -->   
     <div class="row">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5>Total Products</h5>
-                    <p>{{ total_products }}</p>
+        <div class="col-md-3 mb-3">
+            <div class="card border-seccuss shadow-sm h-80">
+                <div class="card-body text-center">
+                    <h5 class="text-success">Total Products</h5>
+                    <p class="display-4">{{ total_products }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <h5>In Transit</h5>
-                    <p>{{ in_transit }}</p>
+        <div class="col-md-3 mb-3">
+            <div class="card border-primary shadow-sm h-80">
+                <div class="card-body text-center">
+                    <h5 class="text-primary">In Transit</h5>
+                    <p class="display-4">{{ in_transit }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5>Delivered</h5>
-                    <p>{{ delivered }}</p>
+        <div class="col-md-3 mb-3">
+            <div class="card border-info shadow-sm h-80">
+                <div class="card-body text-center">
+                    <h5 class="text-info">Delivered</h5>
+                    <p class="display-4">{{ delivered }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h5>Total Vehicles</h5>
-                    <p>{{ total_vehicles }}</p>
+        <div class="col-md-3 mb-3">
+            <div class="card border-danger shadow-sm h-80">
+                <div class="card-body text-center">
+                    <h5 class="text-danger">Total Vehicles</h5>
+                    <p class="display-4">{{ total_vehicles }}</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div>
+<div class="container-fluid px-4" style="padding-top: 0px;">
     <!-- Map Container -->
-    <div id="map" style="height: 500px; width: 430%;"></div>
+    <div id="map" style="height: 500px;"></div>
 
     <!-- Table Showing Product Status -->
     <table class="table table-striped mt-4">

@@ -10,7 +10,7 @@ from .forms import ClientProfileForm
 # Admin Dashboard View
 @login_required
 def admin_dashboard(request):
-    if not request.user.is_superuser:
+    if not request.user.is_staff and not request.user.is_superuser:
         return redirect('dashboard:client_dashboard')
 
     total_products = Product.objects.count()
@@ -30,8 +30,7 @@ def admin_dashboard(request):
 @csrf_exempt
 @login_required
 def client_dashboard(request):
-    print(request.user.is_staff)
-    if request.user.is_superuser or request.user.groups.filter(name='Staff').exists():
+    if request.user.is_superuser:
         return redirect('dashboard:admin_dashboard')
 
     client_products = Product.objects.filter(client=request.user)
@@ -106,9 +105,3 @@ def delete_account(request):
         user.delete()
         return redirect('users:login')
 
-"""   
-@login_required
-def logout_view(request):
-    logout(request)
-    return redirect('users:login')
-"""
