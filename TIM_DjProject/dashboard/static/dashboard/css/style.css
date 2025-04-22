@@ -1,0 +1,51 @@
+.sidebar .nav-link p {
+    margin-left: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1.15rem;
+}
+
+.sidebar .nav-icon {
+    font-size: 1.4rem;
+    width: 2rem;
+    text-align: center;
+}
+
+.sidebar .user-panel .image img {
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Hide Quick Access title when sidebar is collapsed */
+body.sidebar-collapse .quick-access-title {
+    display: none !important;
+}
+
+/* Entire brand link container */
+aside.main-sidebar .brand-link {
+    display: flex !important;
+}
+
+aside.main-sidebar .brand-link .brand-image {
+    width: 40px !important;
+    height: 40px !important;
+    object-fit: cover !important;
+    margin-right: 10px !important;
+}
+
+aside.main-sidebar .brand-link .brand-text {
+    font-size: 1.3rem !important;
+    font-weight: 400 !important;
+    color: #fff !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05rem !important;
+}
+
+.sidebar .user-panel .info a {
+    font-size: 1.2rem;         /* Adjust as needed */
+    font-weight: 500;
+    color: #f8f9fa;
+    text-transform: uppercase !important;
+}
+

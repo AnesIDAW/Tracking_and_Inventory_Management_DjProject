@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+    {% include "includes/sidebar.html" %}
+{% endblock %}
+
+{% block title %}Hub Desktop Info{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">TIM Logistics – Hub Desktop Info</h2>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Main Hub: <strong>SIDI BEL ABBES</strong></h5>
+            <p><strong>Contact Desk:</strong> TIM Support Team</p>
+            <p><strong>Phone:</strong> +123 456 7890</p>
+            <p><strong>Email:</strong> <a href="mailto:desk@timlogistics.com">desk@timlogistics.com</a></p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h6 class="mb-0">Hub Location Map</h6>
+        </div>
+        <div class="card-body p-0">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3259.3583475501123!2d-0.6428222243184339!3d35.22244855504!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd7eff5a2eb39ae9%3A0x1a8804f03addc0a7!2sCampus%20universitaire%20Sidi%20Bel-Abb%C3%A8s!5e0!3m2!1sfr!2sdz!4v1745269714732!5m2!1sfr!2sdz"
+                width="100%" height="400" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy">
+            </iframe>
+        </div>
+    </div>
+</div>
+{% endblock %}

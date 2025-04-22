@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Client Settings{% endblock %}
+{% block sidebar %}
+    {% include "includes/sidebar.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Your Profile</h2>
+    <form method="POST" enctype="multipart/form-data" class="mt-3">
+        {% csrf_token %}
+        {% for field in form %}
+        {{ field | as_crispy_field }}
+        {%endfor%}
+
+        <button class="btn btn-primary" type="submit">Save Changes</button>
+        <a href="{% url 'dashboard:delete_account' %}" class="btn btn-danger float-right">Delete My Account</a>
+    </form>
+</div>
+{% endblock %}

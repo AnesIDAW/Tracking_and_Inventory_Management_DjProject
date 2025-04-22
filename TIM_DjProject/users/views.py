@@ -14,7 +14,7 @@ def register(request):
             group = Group.objects.get(name='Clients')
             user.groups.add(group)
             login(request, user)  # Auto-login after registration
-            return redirect('dashboard')  # Redirect to dashboard after registration
+            return redirect('dashboard:client_dashboard')  # Redirect to dashboard after registration
     else:
         form = CustomUserCreationForm()
     
@@ -41,7 +41,7 @@ def user_login(request):
 # User Logout View
 def user_logout(request):
     logout(request)
-    return redirect('/users/login/')
+    return redirect('login')  # Redirect to login page after logout
 
 """def custom_logout(request):
     logout(request)
