@@ -1,6 +1,9 @@
 from django.urls import path
-from .views import update_location
+from .views import *
+
+app_name = "tracking"
 
 urlpatterns = [
-    path('update-location/', update_location, name='update_location'),
+    path("api/vehicle-locations/", vehicle_locations, name="vehicle_locations"),
+    path('api/rfid-scan/', rfid_scan_receiver, name='rfid_scan_receiver')
 ]

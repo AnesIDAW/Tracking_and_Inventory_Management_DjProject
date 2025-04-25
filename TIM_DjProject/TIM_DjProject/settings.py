@@ -215,7 +215,8 @@ JAZZMIN_SETTINGS = {
     },
 }
 
-ALLOWED_HOSTS = ['127.0.0.1', '192.168.43.209', '0.0.0.0','192.168.1.7', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', '192.168.43.209', '0.0.0.0','192.168.1.7', 'localhost',
+                 '172.16.43.241']
 
 """CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",  # Allow frontend to access API

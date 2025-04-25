@@ -45,7 +45,7 @@
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
                 <li class="nav-item">
                     <a href="{% url 'dashboard:delivery_history' %}" class="nav-link">
-                        <i class="nav-icon fas fa-box"></i>
+                        <i class="nav-icon fas fa-history"></i>
                         <p>Delivery History</p>
                     </a>
                 </li>
@@ -63,8 +63,8 @@
                 </li>
                 <li class="nav-item">
                     <a href="{% url 'dashboard:client_settings' %}" class="nav-link">
-                        <i class="nav-icon fas fa-cog"></i>
-                        <p>Settings</p>
+                        <i class="nav-icon fas fa-user"></i>
+                        <p>Profile</p>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -73,6 +73,22 @@
                         <p>Hub Desktop Info</p>
                     </a>
                 </li>
+                {% if request.user.is_staff or request.user.is_superuser %}
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:staff_product_handler' %}" class="nav-link">
+                        <i class="nav-icon fas fa-box"></i>
+                        <p>Product Form</p>
+                    </a>
+                </li>
+                {% endif %}
+                {% if request.user.is_staff or request.user.is_superuser %}
+                <li class="nav-item">
+                    <a href="{% url 'dashboard:staff_product_list' %}" class="nav-link">
+                        <i class="nav-icon fas fa-boxes"></i>
+                        <p>Products List</p>
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </nav>
 

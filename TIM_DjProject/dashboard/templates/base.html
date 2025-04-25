@@ -5,6 +5,10 @@
     <link rel="stylesheet" href="{% static 'dashboard/css/style.css' %}">
 {% endblock %}
 
+{% block sidebar %}
+   {% include "includes/sidebar.html" %}
+{% endblock %}
+
 <!-- Custom Navigation Bar extended from the Jazzmin admin base.html -->
 {% block top_navbar %}
 <nav class="main-header navbar navbar-expand navbar-dark bg-dark">
@@ -28,7 +32,7 @@
             </a>
             <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="userDropdown">
                 <a class="dropdown-item" href="{% url 'dashboard:client_settings' %}">
-                    <i class="fas fa-cog mr-2"></i> Settings
+                    <i class="fas fa-user mr-2"></i> profile details
                 </a>
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item text-danger" href="{% url 'dashboard:client_logout' %}">

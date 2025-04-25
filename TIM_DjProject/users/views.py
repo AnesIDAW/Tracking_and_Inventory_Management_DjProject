@@ -32,7 +32,6 @@ def user_login(request):
         
         if form.is_valid():
             user = form.get_user()
-            print("User Groups:", list(user.groups.values_list('name', flat=True)))
             login(request, user)
 
             if user.is_superuser or is_staff_user(user):

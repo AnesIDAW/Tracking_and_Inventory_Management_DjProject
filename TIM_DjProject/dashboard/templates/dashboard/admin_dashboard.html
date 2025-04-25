@@ -2,21 +2,17 @@
 
 {% block title %}Staff Dashboard{% endblock %}
 
-{% block sidebar %}
-    {% include "includes/sidebar.html" %}
-{% endblock %}
-
 {% block content %}
 <div class="container fluid px-4" style="padding-top: 0px;">
     <!-- Staff Dashboard Header -->
     <div class="text-center">
         <h2 class="font-weight-bold">Welcome, {{ request.user.first_name|default:request.user.username }}</h2>
-        <p class="text-muted">Here’s you can visionate all the deliveries for all Clients.</p>
+        <p class="text-muted">Here you can view all deliveries across all clients.</p>
     </div>
     <!-- Summary Cards -->   
     <div class="row">
         <div class="col-md-3 mb-3">
-            <div class="card border-seccuss shadow-sm h-80">
+            <div class="card border-seccess shadow-sm h-80">
                 <div class="card-body text-center">
                     <h5 class="text-success">Total Products</h5>
                     <p class="display-4">{{ total_products }}</p>
@@ -51,26 +47,17 @@
 </div>
 
 <div class="container-fluid px-4" style="padding-top: 0px;">
-    <!-- Map Container -->
-    <div id="map" style="height: 500px;"></div>
-
-    <!-- Table Showing Product Status -->
-    <table class="table table-striped mt-4">
-        <thead>
-            <tr>
-                <th>Product Name</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in client_products %}
-            <tr>
-                <td>{{ product.name }}</td>
-                <td>{{ product.status }}</td>
-            </tr>
+    <div class="my-3">
+        <label for="productFilter" class="form-label">Filter by Product:</label>
+        <select id="productFilter" class="form-select">
+            <option value="all">All Products</option>
+            {% for product in products %}
+                <option value="{{ product.rfid_tag }}">{{ product.name }} ({{ product.rfid_tag }})</option>
             {% endfor %}
-        </tbody>
-    </table>
+        </select>
+    </div>
+    <!-- Map Container -->
+    <div id="map" style="height: 500px; width: 100%; max-width: 100%"></div>
 </div>
 
 <!-- Leaflet.js CDN -->
@@ -79,26 +66,48 @@
 
 
 <script>
-    // Initialize the Map
-    var map = L.map('map').setView([0, 0], 2); // Default to world view
+    var map = L.map('map').setView([28.0339, 1.6596], 5); // Algeria focus
 
-    // Load OpenStreetMap Tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Fetch vehicle locations from Django APIs
-    fetch("{% url 'dashboard:vehicle_locations' %}")  // ✅ Correct namespaced URL
-    .then(response => response.json())
-    .then(data => {
-        data.vehicles.forEach(vehicle => {
-            L.marker([vehicle.latitude, vehicle.longitude])
-            .addTo(map)
-            .bindPopup(`<b>${vehicle.vehicle_name}</b><br>Plate: ${vehicle.plate_number}`);
-        });
-    })
-    .catch(error => console.error("Error fetching location data:", error));
+    let markers = [];
 
+    function fetchAndDisplayVehicles(filter = "all") {
+        fetch("{% url 'tracking:vehicle_locations' %}")
+        .then(response => response.json())
+        .then(data => {
+            // Clear previous markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            data.vehicles.forEach(vehicle => {
+                if (filter === "all" || vehicle.rfid_tag === filter) {
+                    const marker = L.marker([vehicle.latitude, vehicle.longitude])
+                        .addTo(map)
+                        .bindPopup(`<b>${vehicle.vehicle_name}</b><br>Plate: ${vehicle.plate_number}`);
+                    markers.push(marker);
+                }
+            });
+
+            // Optional: Auto zoom to marker if filtering
+            if (filter !== "all" && markers.length === 1) {
+                map.setView(markers[0].getLatLng(), 10);
+            }
+        })
+        .catch(error => console.error("Error fetching location data:", error));
+    }
+
+    // Initial load
+    fetchAndDisplayVehicles();
+
+    // Listen for dropdown change
+    document.getElementById("productFilter").addEventListener("change", function () {
+        const selectedRFID = this.value;
+        fetchAndDisplayVehicles(selectedRFID);
+    });
 </script>
+
 
 {% endblock %}
