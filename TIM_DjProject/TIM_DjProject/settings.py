@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-57@t44y@@(x=1h)ptjwuh8#5=#g_z$huz9gu*k-+uo##a6h+*0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*', '127.0.0.1', '192.168.43.209', '0.0.0.0','192.168.1.7', 'localhost',
+                 '172.16.43.241', '192.168.0.40', '192.168.0.140']
 
 
 # Application definition
@@ -214,9 +215,6 @@ JAZZMIN_SETTINGS = {
         "auth.group": "vertical_tabs",
     },
 }
-
-ALLOWED_HOSTS = ['127.0.0.1', '192.168.43.209', '0.0.0.0','192.168.1.7', 'localhost',
-                 '172.16.43.241']
 
 """CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",  # Allow frontend to access API

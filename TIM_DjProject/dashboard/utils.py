@@ -19,6 +19,6 @@ def send_sms_notification(user, product):
     client = Client("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN")
     message = client.messages.create(
         to=user.phone_number,
-        from_="Your_Twilio_Number",
+        from_="Twilio_Number",
         body=f"Hi {user.first_name}, your product '{product.name}' has been delivered!"
     )

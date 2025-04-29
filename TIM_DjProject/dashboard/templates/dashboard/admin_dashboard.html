@@ -66,47 +66,72 @@
 
 
 <script>
-    var map = L.map('map').setView([28.0339, 1.6596], 5); // Algeria focus
+var map = L.map('map').setView([28.0339, 1.6596], 5); // Algeria focus
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
 
-    let markers = [];
+let markers = {}; // Now an object: { plate_number: marker }
+let polylines = {}; // Store path per vehicle
+let vehiclePaths = {}; // Store array of coordinates per vehicle
 
-    function fetchAndDisplayVehicles(filter = "all") {
-        fetch("{% url 'tracking:vehicle_locations' %}")
-        .then(response => response.json())
-        .then(data => {
-            // Clear previous markers
-            markers.forEach(marker => map.removeLayer(marker));
-            markers = [];
-
-            data.vehicles.forEach(vehicle => {
-                if (filter === "all" || vehicle.rfid_tag === filter) {
-                    const marker = L.marker([vehicle.latitude, vehicle.longitude])
+function fetchAndDisplayVehicles(filter = "all") {
+    fetch("{% url 'tracking:vehicle_locations' %}")
+    .then(response => response.json())
+    .then(data => {
+        data.vehicles.forEach(vehicle => {
+            if (filter === "all" || vehicle.rfid_tag === filter) {
+                const latlng = [vehicle.latitude, vehicle.longitude];
+                
+                if (!markers[vehicle.plate_number]) {
+                    // First time seeing this vehicle
+                    const marker = L.marker(latlng)
                         .addTo(map)
                         .bindPopup(`<b>${vehicle.vehicle_name}</b><br>Plate: ${vehicle.plate_number}`);
-                    markers.push(marker);
+                    
+                    markers[vehicle.plate_number] = marker;
+                    vehiclePaths[vehicle.plate_number] = [latlng];
+
+                    polylines[vehicle.plate_number] = L.polyline(vehiclePaths[vehicle.plate_number], { color: 'blue' })
+                        .addTo(map);
+                } else {
+                    // Update existing marker position
+                    markers[vehicle.plate_number].setLatLng(latlng);
+
+                    // Update path
+                    vehiclePaths[vehicle.plate_number].push(latlng);
+                    polylines[vehicle.plate_number].setLatLngs(vehiclePaths[vehicle.plate_number]);
                 }
-            });
-
-            // Optional: Auto zoom to marker if filtering
-            if (filter !== "all" && markers.length === 1) {
-                map.setView(markers[0].getLatLng(), 10);
             }
-        })
-        .catch(error => console.error("Error fetching location data:", error));
-    }
+        });
+    })
+    .catch(error => console.error("Error fetching location data:", error));
+}
 
-    // Initial load
+// Initial load
+fetchAndDisplayVehicles();
+
+// Auto refresh every 3 seconds
+setInterval(() => {
     fetchAndDisplayVehicles();
+}, 3000);
 
-    // Listen for dropdown change
-    document.getElementById("productFilter").addEventListener("change", function () {
-        const selectedRFID = this.value;
-        fetchAndDisplayVehicles(selectedRFID);
-    });
+// Listen for dropdown change
+document.getElementById("productFilter").addEventListener("change", function () {
+    const selectedRFID = this.value;
+
+    // Clear all existing markers and paths
+    Object.values(markers).forEach(marker => map.removeLayer(marker));
+    Object.values(polylines).forEach(polyline => map.removeLayer(polyline));
+
+    markers = {};
+    polylines = {};
+    vehiclePaths = {};
+
+    fetchAndDisplayVehicles(selectedRFID);
+});
+
 </script>
 
 

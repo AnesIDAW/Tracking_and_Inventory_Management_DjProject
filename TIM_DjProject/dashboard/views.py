@@ -85,22 +85,22 @@ def delete_account(request):
         user.delete()
         return redirect('users:login')
 
+
 @login_required
 @user_passes_test(lambda u: u.is_staff)
 def rfid_product_handler(request):
     message = None
-    rfid_prefill = request.GET.get("rfid", "")  # Pre-fill if sent from ESP32
+    rfid_prefill = request.GET.get("rfid_tag", "")  # Pre-fill if sent from ESP32
 
     if request.method == "POST":
         action = request.POST.get("action")
-        rfid = request.POST.get("rfid")
+        rfid = request.POST.get("rfid_tag")
 
         if not rfid:
             message = "RFID is required."
-            return render(request, "dashboard/admin_rfid_scan.html", {"message": message})
+            return render(request, "dashboard/staff_product_handler.html", {"message": message})
 
         if action == "deliver":
-            # Handle delivery scan
             try:
                 product = Product.objects.get(rfid_tag=rfid)
                 product.status = 'delivered'
@@ -132,7 +132,6 @@ def rfid_product_handler(request):
                         "message": "Vehicle not found by plate number."
                     })
 
-            # Create the product
             try:
                 product = Product.objects.create(
                     name=name,
@@ -146,10 +145,14 @@ def rfid_product_handler(request):
             except Exception as e:
                 message = f"Error creating product: {str(e)}"
 
+        # ✅ After successful POST: redirect to clean page without rfid in URL
+        return redirect('dashboard:staff_product_handler')
+
+    # For GET
     return render(request, "dashboard/staff_product_handler.html", {
         "message": message,
         "rfid_prefill": rfid_prefill
-        })
+    })
 
 
 @login_required

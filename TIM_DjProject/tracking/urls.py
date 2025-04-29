@@ -5,5 +5,6 @@ app_name = "tracking"
 
 urlpatterns = [
     path("api/vehicle-locations/", vehicle_locations, name="vehicle_locations"),
-    path('api/rfid-scan/', rfid_scan_receiver, name='rfid_scan_receiver')
+    path('api/rfid-scan/', rfid_scan_receiver, name='rfid_scan_receiver'),
+    path('api/latest-rfid/', latest_rfid, name='latest_rfid'),
 ]
