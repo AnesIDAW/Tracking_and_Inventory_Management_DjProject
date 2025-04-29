@@ -224,3 +224,11 @@ JAZZMIN_SETTINGS = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Redis config for caching GPS data
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+
+# Helper for Redis connection
+import redis
+redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
