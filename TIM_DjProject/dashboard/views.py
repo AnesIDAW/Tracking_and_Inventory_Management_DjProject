@@ -18,12 +18,14 @@ def admin_dashboard(request):
     in_transit = Product.objects.filter(status='in_transit').count()
     delivered = Product.objects.filter(status='delivered').count()
     total_vehicles = Vehicle.objects.count()
+    vehicles = Vehicle.objects.all()
 
     context = {
         'total_products': total_products,
         'in_transit': in_transit,
         'delivered': delivered,
         'total_vehicles': total_vehicles,
+        'vehicles': vehicles,
     }
     return render(request, 'dashboard/admin_dashboard.html', context)
 

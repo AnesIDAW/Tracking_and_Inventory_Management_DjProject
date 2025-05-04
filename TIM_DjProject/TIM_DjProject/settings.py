@@ -225,10 +225,21 @@ JAZZMIN_SETTINGS = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Redis config for caching GPS data
+# Redis config from env
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 
-# Helper for Redis connection
 import redis
+# Direct redis client
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+
+# Django CACHES config using env
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}

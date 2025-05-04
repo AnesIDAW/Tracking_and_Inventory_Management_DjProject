@@ -4,12 +4,11 @@
 
 {% block content %}
 <div class="container fluid px-4" style="padding-top: 0px;">
-    <!-- Staff Dashboard Header -->
     <div class="text-center">
         <h2 class="font-weight-bold">Welcome, {{ request.user.first_name|default:request.user.username }}</h2>
         <p class="text-muted">Here you can view all deliveries across all clients.</p>
     </div>
-    <!-- Summary Cards -->   
+
     <div class="row">
         <div class="col-md-3 mb-3">
             <div class="card border-seccess shadow-sm h-80">
@@ -48,91 +47,106 @@
 
 <div class="container-fluid px-4" style="padding-top: 0px;">
     <div class="my-3">
-        <label for="productFilter" class="form-label">Filter by Product:</label>
-        <select id="productFilter" class="form-select">
-            <option value="all">All Products</option>
-            {% for product in products %}
-                <option value="{{ product.rfid_tag }}">{{ product.name }} ({{ product.rfid_tag }})</option>
+        <label for="vehicleFilter" class="form-label">Filter by Vehicle:</label>
+        <select id="vehicleFilter" class="form-select">
+            <option value="all">All Vehicles</option>
+            {% for vehicle in vehicles %}
+                <option value="{{ vehicle.plate_number }}">{{ vehicle.name }} ({{ vehicle.plate_number }})</option>
             {% endfor %}
         </select>
     </div>
-    <!-- Map Container -->
+
     <div id="map" style="height: 500px; width: 100%; max-width: 100%"></div>
 </div>
 
 <!-- Leaflet.js CDN -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
 
 <script>
-var map = L.map('map').setView([28.0339, 1.6596], 5); // Algeria focus
+var map = L.map('map').setView([28.0339, 1.6596], 5);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-let markers = {}; // Now an object: { plate_number: marker }
-let polylines = {}; // Store path per vehicle
-let vehiclePaths = {}; // Store array of coordinates per vehicle
+let markers = {};
+let vehiclePaths = {};
+let polylines = {};
+let allVehiclesData = {};  // cache all data per vehicle
+let currentFilter = "all";
 
-function fetchAndDisplayVehicles(filter = "all") {
-    fetch("{% url 'tracking:vehicle_locations' %}")
-    .then(response => response.json())
-    .then(data => {
-        data.vehicles.forEach(vehicle => {
-            if (filter === "all" || vehicle.rfid_tag === filter) {
-                const latlng = [vehicle.latitude, vehicle.longitude];
-                
-                if (!markers[vehicle.plate_number]) {
-                    // First time seeing this vehicle
-                    const marker = L.marker(latlng)
-                        .addTo(map)
-                        .bindPopup(`<b>${vehicle.vehicle_name}</b><br>Plate: ${vehicle.plate_number}`);
-                    
-                    markers[vehicle.plate_number] = marker;
-                    vehiclePaths[vehicle.plate_number] = [latlng];
+const client = mqtt.connect("ws://localhost:9001");
 
-                    polylines[vehicle.plate_number] = L.polyline(vehiclePaths[vehicle.plate_number], { color: 'blue' })
-                        .addTo(map);
-                } else {
-                    // Update existing marker position
-                    markers[vehicle.plate_number].setLatLng(latlng);
+client.on("connect", () => {
+    console.log("[MQTT.js] Connected to broker");
+    client.subscribe("vehicle/gps");
+});
 
-                    // Update path
-                    vehiclePaths[vehicle.plate_number].push(latlng);
-                    polylines[vehicle.plate_number].setLatLngs(vehiclePaths[vehicle.plate_number]);
-                }
-            }
-        });
-    })
-    .catch(error => console.error("Error fetching location data:", error));
+function processVehicleData(data) {
+    const { plate_number, latitude, longitude, vehicle_name } = data;
+
+    if (!plate_number || !latitude || !longitude) return;
+
+    // Respect filter
+    if (currentFilter !== "all" && currentFilter !== plate_number) {
+        return;
+    }
+
+    const latlng = [latitude, longitude];
+    allVehiclesData[plate_number] = data; // Cache latest
+
+    if (!markers[plate_number]) {
+        const marker = L.marker(latlng)
+            .addTo(map)
+            .bindPopup(`<b>${vehicle_name || "Vehicle"}</b><br>Plate: ${plate_number}`);
+
+        markers[plate_number] = marker;
+        vehiclePaths[plate_number] = [latlng];
+
+        polylines[plate_number] = L.polyline(vehiclePaths[plate_number], { color: 'blue' }).addTo(map);
+    } else {
+        markers[plate_number].setLatLng(latlng);
+        vehiclePaths[plate_number].push(latlng);
+        polylines[plate_number].setLatLngs(vehiclePaths[plate_number]);
+    }
+
+    // Adjust map view
+    const bounds = currentFilter === "all"
+        ? L.latLngBounds(Object.values(vehiclePaths).flat())
+        : L.latLngBounds(vehiclePaths[plate_number]);
+
+    map.fitBounds(bounds, { padding: [40, 40] });
 }
 
-// Initial load
-fetchAndDisplayVehicles();
+client.on("message", (topic, message) => {
+    try {
+        const data = JSON.parse(message.toString());
+        processVehicleData(data);
+    } catch (e) {
+        console.error("[MQTT.js ERROR]", e);
+    }
+});
 
-// Auto refresh every 3 seconds
-setInterval(() => {
-    fetchAndDisplayVehicles();
-}, 3000);
+document.getElementById("vehicleFilter").addEventListener("change", function () {
+    const selected = this.value;
+    currentFilter = selected;
 
-// Listen for dropdown change
-document.getElementById("productFilter").addEventListener("change", function () {
-    const selectedRFID = this.value;
-
-    // Clear all existing markers and paths
-    Object.values(markers).forEach(marker => map.removeLayer(marker));
-    Object.values(polylines).forEach(polyline => map.removeLayer(polyline));
+    // Clear map
+    Object.values(markers).forEach(m => map.removeLayer(m));
+    Object.values(polylines).forEach(p => map.removeLayer(p));
 
     markers = {};
     polylines = {};
     vehiclePaths = {};
 
-    fetchAndDisplayVehicles(selectedRFID);
+    if (selected === "all") {
+        Object.values(allVehiclesData).forEach(data => processVehicleData(data));
+    } else if (allVehiclesData[selected]) {
+        processVehicleData(allVehiclesData[selected]);
+    }
 });
-
 </script>
-
-
 {% endblock %}

@@ -25,6 +25,9 @@ RUN pip install -r requirements.txt
 COPY . /code/
 COPY ./custom_jazzmin_templates/base.html /usr/local/lib/python3.12/site-packages/jazzmin/templates/admin/base.html
 
+# Copy your entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Run Django server by default
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Use it as entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
