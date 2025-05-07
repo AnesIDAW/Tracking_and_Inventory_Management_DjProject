@@ -9,8 +9,10 @@ A Django-based web application for managing real-time tracking and inventory, Re
 
 **Components Needed:**
 
-- 1 × ESP32-S3 Development Board  
-- 1 × GPS Module (e.g., NEO-6M)  
+- 1 × ESP32-S3 Development Board
+  ![ESP32-S3](Hardware_Setup/assets/ESP32-S3.jpg)   
+- 1 × GPS Module (e.g., NEO-6M)
+  ![GPS-NEO-6M](Hardware_Setup/assets/GPS_NEO_6M_Module.jpg)  
 - Jumper wires  
 - Power supply (e.g., USB or battery)
 
@@ -36,8 +38,9 @@ A Django-based web application for managing real-time tracking and inventory, Re
 
 **Components Needed:**
 
-- 1 × ESP32-S3 Development Board  
-- 1 × MFRC522 RFID Reader Module  
+- 1 × ESP32-S3 Development Board 
+- 1 × MFRC522 RFID Reader Module
+  ![RFID-MFRC522](Hardware_Setup/assets/RFID_RC522.jpg)
 - RFID Tags (e.g., MIFARE)  
 - Jumper wires  
 - Power supply
