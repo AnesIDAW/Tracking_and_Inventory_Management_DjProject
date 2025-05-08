@@ -1,4 +1,9 @@
 """
+This code handle just the GPS data from the MQTT broker.
+It's replaced by the code below that subscribe both GPS and RFID data.
+    - using gps_handler and rfid_handler functions to handle the data.
+    - using cache_vehicle_location function to cache the vehicle location data.
+
 import os
 import django
 import json

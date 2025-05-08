@@ -30,7 +30,7 @@ A Django-based web application for managing real-time tracking and inventory, Re
 **Functionality:**
 
 - The ESP32 reads GPS data via UART.
-- It sends real-time coordinates via HTTP POST to the Django server.
+- It sends real-time coordinates to MQTT Broker.
 
 ---
 
@@ -69,7 +69,6 @@ A Django-based web application for managing real-time tracking and inventory, Re
 
 - Both ESP32 boards must connect to the **same Wi-Fi network** as the Django server.
 - The Django server should provide:
-  - An HTTP API endpoint for receiving GPS location updates.
   - An MQTT broker (e.g., Mosquitto) accessible to all ESP32 devices.
 
 ---

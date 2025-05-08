@@ -1,135 +1,101 @@
 #include <WiFi.h>
-#include <HTTPClient.h>
+#include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <TinyGPS++.h>
 #include <HardwareSerial.h>
 
-// WiFi Credentials and Django api URL
-const char* ssid = "Redmi";  
-const char* password = "anes2909";  
-const char* serverUrl = "http://192.168.43.209:8000/tracking/api/vehicle-locations/";
+// WiFi Credentials
+const char* ssid = "Your_SSID";
+const char* password = "Your_PASSWORD";
 
-// GPS Pins RX and TX
+// MQTT Broker Settings
+const char* mqtt_server = "Your_Broker_System_IP";  // Change to your Mosquitto host IP or hostname
+const int mqtt_port = 1883;
+const char* mqtt_topic = "vehicle/gps";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
 #define RXD2 16
-#define TXD2 17 
-
+#define TXD2 17
 #define GPS_BAUD 9600
 
 HardwareSerial gpsSerial(1);
 TinyGPSPlus gps;
 
-// GPS Coordonates Retreving Function ----------------------------------------------------------------------------
-void get_gps_location(double &latitude, double &longitude){
+void setup_wifi() {
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting to WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print(".");
+  }
+  Serial.println("\n✅ WiFi connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+}
 
+void reconnect_mqtt() {
+  while (!client.connected()) {
+    Serial.print("Connecting to MQTT...");
+    if (client.connect("ESP32_GPS_Client")) {
+      Serial.println(" connected!");
+    } else {
+      Serial.print(" failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" retrying in 3 seconds");
+      delay(3000);
+    }
+  }
+}
+
+void get_gps_location(double &latitude, double &longitude) {
   while (gpsSerial.available() > 0) {
-        gps.encode(gpsSerial.read());
+    gps.encode(gpsSerial.read());
   }
 
-  if (gps.location.isValid()){
+  if (gps.location.isValid()) {
     latitude = gps.location.lat();
     longitude = gps.location.lng();
-  }
-  else{
+  } else {
     Serial.println("⚠️ No valid GPS fix yet.");
   }
-
 }
-// --------------------------------------------------------------------------------------------------------------
-
-
-// WiFi Connection Checking Function ----------------------------------------------------------------------------
-void ensureWiFiConnected() {
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("⚠️ WiFi Disconnected! Reconnecting...");
-        WiFi.begin(ssid, password);
-        int attempts = 0;
-        while (WiFi.status() != WL_CONNECTED && attempts < 10) {  // Limit retries
-            delay(1000);
-            Serial.print(".");
-            attempts++;
-        }
-        if (WiFi.status() == WL_CONNECTED) {
-            Serial.println("\n✅ Reconnected to WiFi!");
-        } else {
-            Serial.println("\n❌ Failed to reconnect!");
-        }
-    }
-}
-// ---------------------------------------------------------------------------------------
-
 
 void setup() {
-    //Serial Monitor begin Baud rate
-    Serial.begin(115200);
+  Serial.begin(115200);
+  gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
+  Serial.println("📡 Serial GPS started");
 
-    // Start Serial connection with GPS Module with the defined RX and TX
-    gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
-    Serial.println("Serial 2 Start at 9600 Baud Rate ..");
-
-    // Start WiFi Connection 
-    WiFi.begin(ssid, password);
-    Serial.print("Connecting to WiFi...");
-    
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(1000);
-        Serial.print(".");
-    }
-
-    Serial.println("\n✅ Connected to WiFi!");
+  setup_wifi();
+  client.setServer(mqtt_server, mqtt_port);
 }
 
 void loop() {
-    ensureWiFiConnected();
+  if (!client.connected()) {
+    reconnect_mqtt();
+  }
+  client.loop();
 
-    if (WiFi.status() == WL_CONNECTED) {
-        HTTPClient http;
-        http.begin(serverUrl);  
-        http.addHeader("Content-Type", "application/json");
+  double latitude = 0.0, longitude = 0.0;
+  get_gps_location(latitude, longitude);
 
-        // Get GPS Data
-        double latitude = 0.0, longitude = 0.0;
-        get_gps_location(latitude, longitude);
+  if (gps.location.isValid()) {
+    StaticJsonDocument<256> doc;
+    doc["plate_number"] = 123014;
+    doc["latitude"] = latitude;
+    doc["longitude"] = longitude;
 
-        // Create JSON object
-        StaticJsonDocument<200> jsonDoc;
-        jsonDoc["plate_number"] = 123014;
+    char buffer[256];
+    serializeJson(doc, buffer);
 
-
-        if (gps.location.isValid()){  // Change this ID for different vehicles
-        jsonDoc["latitude"] = latitude;
-        jsonDoc["longitude"] = longitude;
-        } else {
-          Serial.println("🚫 GPS Fix Not Available - Skipping Data Upload.");
-          return;  // Exit loop() early if GPS is not ready
-        }
-        
-        String jsonData;
-        serializeJson(jsonDoc, jsonData);  // Convert JSON object to string
-
-        Serial.println("\n📡 Sending Data to Server:");
-        Serial.println(jsonData);  // Debugging: Show JSON before sending
-
-        // Send HTTP POST request
-        int httpResponseCode = http.POST(jsonData);
-
-        // Read response
-        Serial.print("🔹 Response Code: ");
-        Serial.println(httpResponseCode);
-
-        if (httpResponseCode > 0) {
-            String response = http.getString();
-            Serial.print("🔹 Server Response: ");
-            Serial.println(response);
-        } else {
-            Serial.println("❌ HTTP Request failed!");
-        }
-        http.end();
-
+    if (client.publish(mqtt_topic, buffer)) {
+      Serial.print("📤 Published: ");
+      Serial.println(buffer);
     } else {
-        Serial.println("⚠️ WiFi Disconnected! Retrying...");
+      Serial.println("❌ MQTT publish failed!");
     }
+  }
 
-    delay(3000);  // Send data every 3 seconds
-
+  delay(3000); // Send every 3 seconds
 }
-
