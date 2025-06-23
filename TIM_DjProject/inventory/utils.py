@@ -1,34 +1,42 @@
+# utils.py
 import qrcode
 from io import BytesIO
 from django.core.files.base import ContentFile
 from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.utils import ImageReader
 
-def generate_qr_image(data: str) -> ContentFile:
-    qr = qrcode.make(data)
+
+def generate_ticket_pdf(product):
+    """Generate PDF ticket for a product, including a QR code if applicable."""
     buffer = BytesIO()
-    qr.save(buffer, format='PNG')
-    return ContentFile(buffer.getvalue())
+    p = canvas.Canvas(buffer, pagesize=A4)
 
-def generate_ticket_pdf(product) -> ContentFile:
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer)
-    
-    p.setFont("Helvetica-Bold", 14)
-    p.drawString(100, 800, "Delivery Ticket")
-
+    # Header Info
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(100, 800, f"Product Ticket")
     p.setFont("Helvetica", 12)
-    p.drawString(100, 770, f"Product: {product.name}")
-    p.drawString(100, 730, f"Method: {product.identification_method}")
-    
-    if product.identification_method == "QR":
-        p.drawString(100, 710, f"QR Code ID: {product.id}")
-    else:
-        p.drawString(100, 710, f"RFID Tag: {product.rfid_tag}")
+    p.drawString(100, 780, f"Name: {product.name}")
+    p.drawString(100, 780, f"Identification: {product.rfid_tag if product.identification_method == 'rfid' else "QR code"}")
+    p.drawString(100, 760, f"Client: {product.client.username}")
+    p.drawString(100, 720, f"Warehouse: {product.warehouse_location}")
+    p.drawString(100, 700, f"Receiver: {product.receiver_name}")
+    p.drawString(100, 680, f"Email: {product.receiver_email}")
+    p.drawString(100, 660, f"Phone: {product.receiver_phone_number}")
 
-    p.setFont("Helvetica-Oblique", 10)
-    p.drawString(100, 690, "Please attach this ticket to the product package.")
+    # Draw QR code if applicable
+    if product.identification_method == "qr code" and product.qr_code:
+        qr = qrcode.make(product.qr_code)
+        qr_buffer = BytesIO()
+        qr.save(qr_buffer, format="PNG")
+        qr_buffer.seek(0)
+        qr_image = ImageReader(qr_buffer)
+        p.drawImage(qr_image, 100, 500, width=150, height=150)
 
     p.showPage()
     p.save()
     buffer.seek(0)
-    return ContentFile(buffer.read())
+
+    return ContentFile(buffer.read(), name=f"ticket_{product.name}.pdf")
+
+
