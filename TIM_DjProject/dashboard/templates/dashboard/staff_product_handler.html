@@ -20,11 +20,24 @@
             </label>
         </div>
 
-        <!-- RFID Input -->
         <div class="form-group mb-3">
-            <label for="rfid">RFID Tag:</label>
-            <input type="text" name="rfid_tag" class="form-control" value="{{ rfid_prefill }}" required>
+            <label >Identification Method:</label><br>
+            <label class="font-weight-light mr-3"><input type="radio" name="identification_method" value="rfid" checked> RFID</label>
+            <label class="font-weight-light mr-3"><input type="radio" name="identification_method" value="qr code"> QR Code</label>
         </div>
+
+        <!-- RFID input -->
+        <div class="form-group mb-3" id="rfid-input">
+            <label for="rfid_tag">RFID Tag:</label>
+            <input type="text" name="rfid_tag" id="rfid-field" class="form-control" value="{{ rfid_prefill }}">
+        </div>
+
+        <!-- QR input (for delivery only) -->
+        <div class="form-group mb-3" id="qr-input" style="display:none;">
+            <label for="qr_code">QR Code ID:</label>
+            <input type="text" name="qr_code" id="qr_code" class="form-control">
+        </div>
+
 
         <!-- Product Info for Adding -->
         <div id="product-info-fields">
@@ -54,6 +67,11 @@
             </div>
 
             <div class="form-group mb-3">
+                <label for="receiver_email">Receiver Email:</label>
+                <input type="text" name="receiver_email" id="receiver_email" class="form-control">
+            </div>
+
+            <div class="form-group mb-3">
                 <label for="vehicle">Vehicle Plate Number (optional):</label>
                 <input type="text" name="vehicle" id="vehicle" class="form-control">
             </div>
@@ -67,59 +85,115 @@
         <button type="submit" class="btn btn-primary mt-2">Submit</button>
     </form>
 
-    {% if message %}
-        <div class="alert alert-info mt-4">{{ message }}</div>
+    {% if messages %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        {% for message in messages %}
+        Swal.fire({
+            title: 'Success!',
+            text: '{{ message }}',
+            icon: 'success',
+            confirmButtonText: 'OK'
+        });
+        {% endfor %}
+    </script>
     {% endif %}
-</div>
+
+    </div>
 
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
 <script>
-// Optional: Hide product fields if "Deliver" is selected
-document.querySelectorAll('input[name="action"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-        const productFields = document.getElementById("product-info-fields");
-        if (document.querySelector('input[name="action"]:checked').value === 'deliver') {
+document.addEventListener("DOMContentLoaded", () => {
+    const actionRadios = document.querySelectorAll('input[name="action"]');
+    const methodRadios = document.querySelectorAll('input[name="identification_method"]');
+    const productFields = document.getElementById("product-info-fields");
+    const rfidInputDiv = document.getElementById("rfid-input");
+    const qrInputDiv = document.getElementById("qr-input");
+
+    const rfidField = document.getElementById("rfid-field");
+    const qrField = document.getElementById("qr_code");
+
+    function toggleFormFields() {
+        const action = document.querySelector('input[name="action"]:checked').value;
+        const method = document.querySelector('input[name="identification_method"]:checked').value;
+
+        if (action === "deliver") {
             productFields.style.display = "none";
-        } else {
+
+            if (method === "qr code") {
+                qrInputDiv.style.display = "block";
+                qrField.required = true;
+
+                rfidInputDiv.style.display = "none";
+                rfidField.required = false;
+            } else {
+                qrInputDiv.style.display = "none";
+                qrField.required = false;
+
+                rfidInputDiv.style.display = "block";
+                rfidField.required = true;
+            }
+
+        } else { // action === "add"
             productFields.style.display = "block";
+
+            if (method === "qr code") {
+                qrInputDiv.style.display = "none";
+                qrField.required = false;
+
+                rfidInputDiv.style.display = "none";
+                rfidField.required = false; // Not needed for QR during add
+            } else {
+                qrInputDiv.style.display = "none";
+                qrField.required = false;
+
+                rfidInputDiv.style.display = "block";
+                rfidField.required = true;
+            }
+        }
+    }
+
+    actionRadios.forEach(radio => radio.addEventListener("change", toggleFormFields));
+    methodRadios.forEach(radio => radio.addEventListener("change", toggleFormFields));
+
+    // Initialize on load
+    toggleFormFields();
+
+    // --- MQTT Handling ---
+    let lastRFID = null;
+    const rfidInput = document.querySelector('input[name="rfid_tag"]');
+
+    const client = mqtt.connect("ws://localhost:9001");
+
+    client.on("connect", () => {
+        console.log("[MQTT.js] Connected via WebSocket");
+        client.subscribe("product/rfid");
+    });
+
+    client.on("error", (err) => {
+        console.error("[MQTT.js] Connection failed:", err);
+    });
+
+    client.on("message", (topic, message) => {
+        try {
+            const data = JSON.parse(message.toString());
+            const rfidTag = data.rfid_tag;
+
+            if (rfidTag && rfidTag !== lastRFID) {
+                lastRFID = rfidTag;
+                rfidInput.value = rfidTag;
+
+                // Highlight animation
+                rfidInput.classList.add('rfid-updated');
+                setTimeout(() => {
+                    rfidInput.classList.remove('rfid-updated');
+                }, 1000);
+            }
+        } catch (e) {
+            console.error("[MQTT.js] Invalid JSON:", e);
         }
     });
-});
-
-let lastRFID = null;
-const rfidInput = document.querySelector('input[name="rfid_tag"]');
-
-// Connect using MQTT.js (WebSocket version)
-const client = mqtt.connect("ws://localhost:9001");  // Change to your MQTT WebSocket port
-
-client.on("connect", () => {
-    console.log("[MQTT.js] Connected via WebSocket");
-    client.subscribe("product/rfid");
-});
-
-client.on("error", (err) => {
-    console.error("[MQTT.js] Connection failed:", err);
-});
-
-client.on("message", (topic, message) => {
-    try {
-        const data = JSON.parse(message.toString());
-        const rfidTag = data.rfid_tag;
-
-        if (rfidTag && rfidTag !== lastRFID) {
-            lastRFID = rfidTag;
-            rfidInput.value = rfidTag;
-
-            // Highlight animation
-            rfidInput.classList.add('rfid-updated');
-            setTimeout(() => {
-                rfidInput.classList.remove('rfid-updated');
-            }, 1000);
-        }
-    } catch (e) {
-        console.error("[MQTT.js] Invalid JSON:", e);
-    }
 });
 </script>
 

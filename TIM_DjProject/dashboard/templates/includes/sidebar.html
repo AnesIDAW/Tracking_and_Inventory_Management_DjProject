@@ -43,20 +43,23 @@
         <nav class="mt-4">
             <h6 class="text-muted text-uppercase px-3 quick-access-title">Quick Access</h6>
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                {% if not request.user.is_staff or request.user.is_superuser %}
                 <li class="nav-item">
                     <a href="{% url 'dashboard:delivery_history' %}" class="nav-link">
                         <i class="nav-icon fas fa-history"></i>
                         <p>Delivery History</p>
                     </a>
                 </li>
+                {% endif %}
+                
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{% url 'dashboard:reports' %}" class="nav-link">
                         <i class="nav-icon fas fa-chart-line"></i>
                         <p>Reports</p>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{% url 'dashboard:support_center' %}" class="nav-link">
                         <i class="nav-icon fas fa-tools"></i>
                         <p>Support Center</p>
                     </a>

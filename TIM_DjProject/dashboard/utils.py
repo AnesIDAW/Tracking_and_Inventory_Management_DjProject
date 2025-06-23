@@ -4,13 +4,13 @@ from twilio.rest import Client
 def send_delivery_notification(product):
     user = product.client
     subject = f"Your product '{product.name}' was delivered"
-    message = f"Hello {user.first_name},\n\nYour product '{product.name}' was delivered on {product.delivery_date}."
-    recipient_list = [user.email]
+    message = f"Hello {user.first_name},\n\nYour product '{product.name}' was delivered on {product.last_scanned_time}."
+    recipient_list = [product.receiver_email]
 
     send_mail(
         subject,
         message,
-        'naimia157@gmail.com',
+        'naimianes312@gmail.com',
         recipient_list,
         fail_silently=False,
     )

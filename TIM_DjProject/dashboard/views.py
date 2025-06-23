@@ -7,6 +7,12 @@ from django.views.decorators.csrf import csrf_exempt
 from .forms import ClientProfileForm
 from django.utils import timezone
 from django.db.models import Q
+from uuid import uuid4
+from django.http import HttpResponse
+from django.http import FileResponse
+from django.contrib import messages
+import time
+import traceback
 
 # Admin Dashboard View
 @login_required
@@ -63,6 +69,14 @@ def delivery_history(request):
     return render(request, 'dashboard/delivery_history.html', context)
 
 @login_required
+def reports(request):
+    return render(request, 'dashboard/reports.html')
+
+@login_required
+def support_center(request):
+    return render(request, 'dashboard/support_center.html')
+
+@login_required
 def hub_info(request):
     return render(request, 'dashboard/hub_info.html')
 
@@ -90,72 +104,107 @@ def delete_account(request):
 
 @login_required
 @user_passes_test(lambda u: u.is_staff)
-def rfid_product_handler(request):
+def product_handler(request):
     message = None
-    rfid_prefill = request.GET.get("rfid_tag", "")  # Pre-fill if sent from ESP32
+    rfid_prefill = request.GET.get("rfid_tag", "")
 
     if request.method == "POST":
         action = request.POST.get("action")
-        rfid = request.POST.get("rfid_tag")
-
-        if not rfid:
-            message = "RFID is required."
-            return render(request, "dashboard/staff_product_handler.html", {"message": message})
+        identification_method = request.POST.get("identification_method")
 
         if action == "deliver":
+            tag = request.POST.get("rfid_tag") or request.POST.get("qr_code")
+            if not tag:
+                return render(request, "dashboard/staff_product_handler.html", {
+                    "message": "Tag (RFID or QR Code) is required."
+                })
+
             try:
-                product = Product.objects.get(rfid_tag=rfid)
+                if identification_method == "qr code":
+                    product = Product.objects.get(qr_code=tag)
+                else:
+                    product = Product.objects.get(rfid_tag=tag)
+
                 product.status = 'delivered'
                 product.last_scanned_time = timezone.now()
                 product.save()
-                message = f"Product '{product.name}' marked as delivered."
+
+                messages.success(request, "Product marked as delivered!")
+                return redirect('dashboard:staff_product_handler')
+
             except Product.DoesNotExist:
-                message = "Product with this RFID not found."
-        
+                message = "Product with this tag was not found."
+
         elif action == "add":
-            name = request.POST.get("name")
-            client_username = request.POST.get("client")
-            warehouse = request.POST.get("warehouse")
-            vehicle_plate = request.POST.get("vehicle")
-
             try:
-                client = CustomUser.objects.get(username=client_username)
-            except CustomUser.DoesNotExist:
-                return render(request, "dashboard/staff_product_handler.html", {
-                    "message": "Client not found by username."
-                })
+                name = request.POST.get("name")
+                client = CustomUser.objects.get(username=request.POST.get("client"))
+                warehouse = request.POST.get("warehouse")
+                vehicle_plate = request.POST.get("vehicle")
+                vehicle = Vehicle.objects.get(plate_number=vehicle_plate) if vehicle_plate else None
 
-            vehicle = None
-            if vehicle_plate:
-                try:
-                    vehicle = Vehicle.objects.get(plate_number=vehicle_plate)
-                except Vehicle.DoesNotExist:
-                    return render(request, "dashboard/staff_product_handler.html", {
-                        "message": "Vehicle not found by plate number."
-                    })
+                receiver_name = request.POST.get("receiver_name")
+                receiver_email = request.POST.get("receiver_email")
+                receiver_phone = request.POST.get("receiver_phone")
 
-            try:
-                product = Product.objects.create(
-                    name=name,
-                    rfid_tag=rfid,
-                    client=client,
-                    warehouse_location=warehouse,
-                    vehicle=vehicle,
-                    status='stored'
-                )
-                message = f"Product '{name}' added successfully."
+                if identification_method == "qr code":
+                    qr_code = str(uuid4())
+                    product = Product.objects.create(
+                        name=name,
+                        identification_method="qr code",
+                        qr_code=qr_code,
+                        client=client,
+                        warehouse_location=warehouse,
+                        vehicle=vehicle,
+                        receiver_name=receiver_name,
+                        receiver_email=receiver_email,
+                        receiver_phone_number=receiver_phone
+                    )
+                else:
+                    rfid = request.POST.get("rfid_tag")
+                    if not rfid:
+                        raise ValueError("RFID is required.")
+                    product = Product.objects.create(
+                        name=name,
+                        identification_method="rfid",
+                        rfid_tag=rfid,
+                        client=client,
+                        warehouse_location=warehouse,
+                        vehicle=vehicle,
+                        receiver_name=receiver_name,
+                        receiver_email=receiver_email,
+                        receiver_phone_number=receiver_phone
+                    )
+
+                # Force ticket PDF generation (save handles this)
+                product.save()
+
+                # DEBUG: Print to console
+                print("✅ Product created:", product)
+                print("📄 Ticket PDF path:", product.ticket_pdf)
+
+                return redirect('dashboard:download_ticket', pk=product.pk)
+
             except Exception as e:
-                message = f"Error creating product: {str(e)}"
+                # DEBUG: print full traceback
+                print("❌ Error creating product:")
+                traceback.print_exc()
+                message = f"Error: {str(e)}"
 
-        # ✅ After successful POST: redirect to clean page without rfid in URL
-        return redirect('dashboard:staff_product_handler')
-
-    # For GET
     return render(request, "dashboard/staff_product_handler.html", {
         "message": message,
         "rfid_prefill": rfid_prefill
     })
 
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def download_ticket(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if not product.ticket_pdf:
+        return HttpResponse("PDF not available", status=404)
+
+    return FileResponse(product.ticket_pdf.open(), content_type='application/pdf')
 
 @login_required
 @user_passes_test(lambda u: u.is_staff)
@@ -184,7 +233,7 @@ def staff_product_list(request):
 
 @login_required
 @user_passes_test(lambda u: u.is_staff)
-def delete_product(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+def delete_product(request, pk):
+    product = get_object_or_404(Product, id=pk)
     product.delete()
-    return redirect('dashboard:staff_products_list')  # Make sure this name matches your URL
+    return redirect('dashboard:staff_product_list')  # Make sure this name matches your URL

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %} Support Center {% endblock title %}
+
+{% block content %}
+
+{% if request.user.is_superuser or request.user.is_staff %}
+    <h1> Support Center</h1>
+{% endif %}
+
+{% endblock %}
