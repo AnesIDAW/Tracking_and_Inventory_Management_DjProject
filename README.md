@@ -63,6 +63,12 @@ A Django-based web application for managing real-time tracking and inventory, Re
 
 - The UID is sent via MQTT to the Django backend for real-time handling.
 
+**Wiring Diagram**
+- ESP32-S3 + GPS NEO6M + SIM900A Wiring Diagram
+  ![ESP32-S3_SIM900A_GPS-NEO6M](Hardware_Setup/assets/ESP32-S3_SIM900A_GPS-NEO6M.png)  
+- ESP32-S3 + RFID-RC522 Wiring Diagram
+  ![ESP32-S3_RFID-RC522](Hardware_Setup/assets/ESP32-S3_RFID-RC522.png)  
+
 ---
 
 ### 📡 Networking Notes
