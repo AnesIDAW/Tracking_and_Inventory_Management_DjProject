@@ -1,42 +1,72 @@
-# utils.py
-import qrcode
+from reportlab.lib.pagesizes import A5
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import mm
+from reportlab.lib import colors
+from reportlab.lib.utils import ImageReader
 from io import BytesIO
 from django.core.files.base import ContentFile
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.utils import ImageReader
-
+import qrcode
 
 def generate_ticket_pdf(product):
-    """Generate PDF ticket for a product, including a QR code if applicable."""
     buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A5
+    c = canvas.Canvas(buffer, pagesize=A5)
 
-    # Header Info
-    p.setFont("Helvetica-Bold", 16)
-    p.drawString(100, 800, f"Product Ticket")
-    p.setFont("Helvetica", 12)
-    p.drawString(100, 780, f"Name: {product.name}")
-    p.drawString(100, 780, f"Identification: {product.rfid_tag if product.identification_method == 'rfid' else "QR code"}")
-    p.drawString(100, 760, f"Client: {product.client.username}")
-    p.drawString(100, 720, f"Warehouse: {product.warehouse_location}")
-    p.drawString(100, 700, f"Receiver: {product.receiver_name}")
-    p.drawString(100, 680, f"Email: {product.receiver_email}")
-    p.drawString(100, 660, f"Phone: {product.receiver_phone_number}")
+    margin = 12 * mm
+    border_width = 2
 
-    # Draw QR code if applicable
+    # Draw border
+    c.setLineWidth(border_width)
+    c.setStrokeColor(colors.black)
+    c.rect(margin, margin, width - 2 * margin, height - 2 * margin)
+
+    # Title
+    c.setFont("Helvetica-Bold", 22)
+    c.drawCentredString(width / 2, height - margin - 20, "Delivery Ticket")
+
+    # Product information
+    c.setFont("Helvetica", 14)
+    y = height - margin - 50
+    line_height = 22
+
+    def draw_line(label, value):
+        nonlocal y
+        text = f"{label}: {value}"
+        c.drawString(margin + 10, y, text)
+        y -= line_height
+
+    draw_line("Product Name", product.name)
+    draw_line("Ticket Number", product.ticket)
+    draw_line("Client", product.client.username)
+    draw_line("Warehouse", product.warehouse_location or "N/A")
+    draw_line("Status", product.status.title())
+    if product.vehicle:
+        draw_line("Vehicle Plate", product.vehicle.plate_number)
+    draw_line("Receiver", product.receiver_name or "N/A")
+    draw_line("Receiver Email", product.receiver_email or "N/A")
+    draw_line("Receiver Phone", product.receiver_phone_number or "N/A")
+
+    # Generate QR code if applicable
     if product.identification_method == "qr code" and product.qr_code:
-        qr = qrcode.make(product.qr_code)
+        qr = qrcode.QRCode(
+            version=1,
+            box_size=10,
+            border=2,
+        )
+        qr.add_data(product.qr_code)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+
         qr_buffer = BytesIO()
-        qr.save(qr_buffer, format="PNG")
+        img.save(qr_buffer, format='PNG')
         qr_buffer.seek(0)
         qr_image = ImageReader(qr_buffer)
-        p.drawImage(qr_image, 100, 500, width=150, height=150)
 
-    p.showPage()
-    p.save()
+        c.drawImage(qr_image, width - 100, margin + 20, width=70, height=70)
+
+    c.showPage()
+    c.save()
     buffer.seek(0)
 
-    return ContentFile(buffer.read(), name=f"ticket_{product.name}.pdf")
-
-
+    file_name = f"ticket_{product.ticket}.pdf"
+    return ContentFile(buffer.getvalue(), name=file_name)
