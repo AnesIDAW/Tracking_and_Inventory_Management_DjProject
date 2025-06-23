@@ -46,36 +46,6 @@
         </div>
     </div>
 
-<!-- Delivery Status Progress Bar -->
-<div class="card shadow-sm mb-5">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">Current Delivery Status</h5>
-    </div>
-    <div class="card-body">
-
-        <!-- Labels above the progress bar -->
-        <div class="d-flex justify-content-between px-1 mb-2 text-center">
-            <div class="flex-fill">Stored</div>
-            <div class="flex-fill">In Transit</div>
-            <div class="flex-fill">Delivered</div>
-        </div>
-
-        <!-- Segmented progress bar -->
-        <div class="progress" style="height: 15px;">
-            <div class="progress-bar bg-secondary" role="progressbar"
-                 style="width: {{ stored_percentage }}%">
-            </div>
-            <div class="progress-bar bg-primary" role="progressbar"
-                 style="width: {{ in_transit_percentage }}%">
-            </div>
-            <div class="progress-bar bg-success" role="progressbar"
-                 style="width: {{ delivered_percentage }}%">
-            </div>
-        </div>
-    </div>
-</div>
-
-
     <!-- Recent Orders Table -->
     <div class="card shadow-sm mb-5">
         <div class="card-header bg-light">
