@@ -74,7 +74,6 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let markers = {};
 let vehiclePaths = {};
-let polylines = {};
 let allVehiclesData = {};  // cache all data per vehicle
 let currentFilter = "all";
 
@@ -106,11 +105,9 @@ function processVehicleData(data) {
         markers[plate_number] = marker;
         vehiclePaths[plate_number] = [latlng];
 
-        polylines[plate_number] = L.polyline(vehiclePaths[plate_number], { color: 'blue' }).addTo(map);
     } else {
         markers[plate_number].setLatLng(latlng);
         vehiclePaths[plate_number].push(latlng);
-        polylines[plate_number].setLatLngs(vehiclePaths[plate_number]);
     }
 
     // Adjust map view
@@ -136,10 +133,8 @@ document.getElementById("vehicleFilter").addEventListener("change", function () 
 
     // Clear map
     Object.values(markers).forEach(m => map.removeLayer(m));
-    Object.values(polylines).forEach(p => map.removeLayer(p));
 
     markers = {};
-    polylines = {};
     vehiclePaths = {};
 
     if (selected === "all") {
