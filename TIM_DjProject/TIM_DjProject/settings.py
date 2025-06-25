@@ -160,7 +160,7 @@ JAZZMIN_SETTINGS = {
     "site_logo": None,
     
     # Copyright on the footer
-    "copyright": "TIM Project Copyright",
+    "copyright": "TIM Project",
     "user_avatar": None,
     ############
     # Top Menu #
